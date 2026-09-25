@@ -1,0 +1,88 @@
+{% extends "layouts/main.html.twig" %}
+
+{% block title %}Finalizar y Cobrar Renta{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  <div class="row justify-content-center">
+    <div class="col-lg-7">
+      <div class="card shadow-sm border-0">
+        <div class="card-header bg-danger text-white py-3 d-flex justify-content-between align-items-center">
+          <h5 class="mb-0 fw-bold"><i class="bi bi-cash-stack me-2"></i>Finalizar y Cobrar Sesión</h5>
+          <a href="{{ base_url }}/home" class="btn btn-sm btn-light">
+            <i class="bi bi-x-lg"></i>
+          </a>
+        </div>
+        <div class="card-body p-4">
+          <!-- Detalle de la renta -->
+          <div class="row g-3 mb-4">
+            <div class="col-sm-6">
+              <label class="text-muted small text-uppercase fw-bold">Equipo</label>
+              <div class="fs-5 fw-bold text-dark">{{ rent.equipment ? rent.equipment.name : 'Equipo #' ~ rent.equipment_id }}</div>
+            </div>
+            <div class="col-sm-6">
+              <label class="text-muted small text-uppercase fw-bold">Cliente</label>
+              <div class="fs-5 fw-bold text-dark">{{ rent.person_name }}</div>
+            </div>
+            <div class="col-sm-4">
+              <label class="text-muted small text-uppercase fw-bold">Hora Entrada</label>
+              <div class="fw-bold">{{ rent.start_time }}</div>
+            </div>
+            <div class="col-sm-4">
+              <label class="text-muted small text-uppercase fw-bold">Hora Salida (Ahora)</label>
+              <div class="fw-bold text-primary">{{ calc.now_time }}</div>
+            </div>
+            <div class="col-sm-4">
+              <label class="text-muted small text-uppercase fw-bold">Tiempo Transcurrido</label>
+              <div class="fw-bold">{{ calc.minutes }} minutos</div>
+            </div>
+          </div>
+
+          <!-- Cuadro de cálculo -->
+          <div class="alert alert-light border-2 border-primary p-3 mb-4">
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <span class="badge bg-secondary mb-1">Bono aplicado: {{ rent.bonus_mins }} min</span>
+                <div class="text-muted small">Minutos a cobrar: <strong>{{ calc.billable_minutes }} min</strong></div>
+                <div class="text-muted small">Tarifa del equipo: ${{ rent.equipment ? rent.equipment.price_hour : 0 }}/hr</div>
+              </div>
+              <div class="text-end">
+                <span class="small text-muted text-uppercase fw-bold d-block">Monto Calculado</span>
+                <span class="fs-2 fw-bold text-success">${{ calc.cost|number_format(2, '.', ',') }}</span>
+              </div>
+            </div>
+          </div>
+
+          <form method="POST" action="{{ base_url }}/rents/finish/{{ rent.id }}">
+            {{ csrf_field() }}
+
+            <input type="hidden" name="finish_date" value="{{ calc.now_date }}">
+
+            <div class="row g-3">
+              <div class="col-sm-6">
+                <label class="form-label fw-bold">Hora de Fin Confirmada</label>
+                <input type="time" name="finish_time" class="form-control" required value="{{ calc.now_time }}">
+              </div>
+
+              <div class="col-sm-6">
+                <label class="form-label fw-bold">Monto a Cobrar ($) *</label>
+                <div class="input-group">
+                  <span class="input-group-text">$</span>
+                  <input type="number" step="0.5" name="price" class="form-control form-control-lg fw-bold text-success" required value="{{ calc.cost }}">
+                </div>
+              </div>
+
+              <div class="col-12 text-end mt-4">
+                <a href="{{ base_url }}/home" class="btn btn-secondary me-2">Cancelar</a>
+                <button type="submit" class="btn btn-success btn-lg px-4">
+                  <i class="bi bi-check2-circle me-1"></i> Cobrar y Liberar Cabina
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

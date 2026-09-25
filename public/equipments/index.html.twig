@@ -1,0 +1,81 @@
+{% extends "layouts/main.html.twig" %}
+
+{% block title %}Equipos y Cabinas{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h2 class="h3 mb-0 text-gray-800">Catálogo de Equipos y Cabinas</h2>
+      <p class="text-muted mb-0">Gestión de computadoras, consolas o estaciones de trabajo.</p>
+    </div>
+    <div>
+      <a href="{{ base_url }}/equipments/new" class="btn btn-primary">
+        <i class="bi bi-plus-lg me-1"></i> Nuevo Equipo
+      </a>
+    </div>
+  </div>
+
+  <div class="card shadow-sm">
+    <div class="card-body">
+      {% if equipments is empty %}
+        <div class="text-center py-5 text-muted">
+          <i class="bi bi-pc-display fs-1 d-block mb-3"></i>
+          <h5>No hay equipos registrados</h5>
+          <p>Comienza registrando tu primer equipo para el ciber café.</p>
+          <a href="{{ base_url }}/equipments/new" class="btn btn-primary mt-2">Agregar Equipo</a>
+        </div>
+      {% else %}
+        <div class="table-responsive">
+          <table class="table table-sm table-hover align-middle">
+            <thead class="table-light">
+              <tr>
+                <th>ID</th>
+                <th>Código</th>
+                <th>Nombre</th>
+                <th>Descripción</th>
+                <th>Precio / Hora</th>
+                <th>Precio / Media Hora</th>
+                <th>Estado</th>
+                <th class="text-end">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for eq in equipments %}
+                <tr>
+                  <td>#{{ eq.id }}</td>
+                  <td><span class="badge bg-light text-dark border">{{ eq.code ?: 'N/A' }}</span></td>
+                  <td class="fw-bold">{{ eq.name }}</td>
+                  <td>{{ eq.description ?: '-' }}</td>
+                  <td>${{ eq.price_hour|number_format(2, '.', ',') }}</td>
+                  <td>${{ eq.price_half|number_format(2, '.', ',') }}</td>
+                  <td>
+                    {% if eq.is_occupied %}
+                      <span class="badge bg-danger"><i class="bi bi-clock me-1"></i>Ocupado</span>
+                    {% else %}
+                      <span class="badge bg-success"><i class="bi bi-check2 me-1"></i>Disponible</span>
+                    {% endif %}
+                  </td>
+                  <td class="text-end">
+                    {% if not eq.is_occupied %}
+                      <a href="{{ base_url }}/rents/new?equipment_id={{ eq.id }}" class="btn btn-xs btn-outline-success me-1" title="Rentar">
+                        <i class="bi bi-play-circle"></i>
+                      </a>
+                    {% endif %}
+                    <a href="{{ base_url }}/equipments/edit/{{ eq.id }}" class="btn btn-xs btn-warning me-1" title="Editar">
+                      <i class="bi bi-pencil"></i>
+                    </a>
+                    <a href="{{ base_url }}/equipments/delete/{{ eq.id }}" class="btn btn-xs btn-danger" onclick="return confirm('¿Seguro que deseas eliminar este equipo?');" title="Eliminar">
+                      <i class="bi bi-trash"></i>
+                    </a>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,52 +1,59 @@
-create database ciberman;
-use ciberman;
+-- Esquema de Base de Datos para Ciberman 2
+-- Sistema de Control y Alquiler de Ciber Café
 
-create table user(
-	id int not null auto_increment primary key,
-	name varchar(50),
-	lastname varchar(50),
-	username varchar(50),
-	email varchar(255),
-	password varchar(60),
-	image varchar(255),
-	status int default 1,
-	kind int default 1,
-	created_at datetime
+CREATE DATABASE IF NOT EXISTS ciberman;
+USE ciberman;
+
+-- Tabla de usuarios y operadores
+CREATE TABLE IF NOT EXISTS user (
+    id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(50),
+    lastname VARCHAR(50),
+    username VARCHAR(50) UNIQUE,
+    email VARCHAR(255),
+    password VARCHAR(60),
+    image VARCHAR(255) DEFAULT '',
+    status INT DEFAULT 1, -- 1: Activo, 2: Inactivo
+    kind INT DEFAULT 1,   -- 1: Administrador, 2: Operador
+    created_at DATETIME
 );
 
-/**
-* password: encrypted using sha1(md5("mypassword"))
-* status: 1. active, 2. inactive, 3. other, ...
-* kind: 1. root, 2. other, ...
-**/
-
-/* insert user example */
-insert into user (name,username,password,created_at) value ("Administrator","admin",sha1(md5("admin")),NOW());
-
-
-
-create table equipment(
-	id int not null auto_increment primary key,
-	code varchar(50),
-	name varchar(50),
-	description varchar(50),
-	price_hour double,
-	price_half double,
-	created_at datetime
+-- Tabla de equipos / computadoras / cabinas
+CREATE TABLE IF NOT EXISTS equipment (
+    id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    code VARCHAR(50),
+    name VARCHAR(50) NOT NULL,
+    description VARCHAR(255),
+    price_hour DOUBLE DEFAULT 15.0,
+    price_half DOUBLE DEFAULT 8.0,
+    created_at DATETIME
 );
 
-create table rent( 
-	id int not null auto_increment primary key,
-	price double,
-	start_date date,
-	finish_date date,
-	bonus_mins int,
-	start_time time,
-	finish_time time,
-	person_name varchar(255),
-	equipment_id int not null,
-	user_id int not null,
-	created_at datetime,
-	foreign key (user_id) references user(id),
-	foreign key (equipment_id) references equipment(id)
+-- Tabla de rentas de tiempo
+CREATE TABLE IF NOT EXISTS rent (
+    id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    price DOUBLE DEFAULT 0.0,
+    start_date DATE,
+    finish_date DATE,
+    bonus_mins INT DEFAULT 0,
+    start_time TIME,
+    finish_time TIME,
+    person_name VARCHAR(255) DEFAULT 'Público General',
+    equipment_id INT NOT NULL,
+    user_id INT NOT NULL,
+    created_at DATETIME,
+    FOREIGN KEY (user_id) REFERENCES user(id),
+    FOREIGN KEY (equipment_id) REFERENCES equipment(id) ON DELETE CASCADE
 );
+
+-- Inserción de usuario administrador inicial (password: admin -> sha1(md5("admin")))
+INSERT INTO user (name, lastname, username, email, password, status, kind, created_at)
+VALUES ("Administrador", "Sistema", "admin", "admin@ciberman.local", SHA1(MD5("admin")), 1, 1, NOW())
+ON DUPLICATE KEY UPDATE id=id;
+
+-- Inserción de equipos de demostración
+INSERT INTO equipment (code, name, description, price_hour, price_half, created_at) VALUES
+('PC-01', 'Computadora 01', 'Windows 11, Core i5, 16GB RAM, Auriculares', 15.00, 8.00, NOW()),
+('PC-02', 'Computadora 02', 'Windows 11, Core i5, 16GB RAM, Auriculares', 15.00, 8.00, NOW()),
+('PC-03', 'Computadora 03', 'Windows 11, Core i7, 32GB RAM, Edición/Juegos', 20.00, 10.00, NOW()),
+('CAB-04', 'Cabina 04', 'Terminal de navegación rápida e impresión', 12.00, 6.00, NOW());

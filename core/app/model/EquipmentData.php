@@ -1,79 +1,107 @@
 <?php
+/**
+ * Modelo de equipos y computadoras del ciber café.
+ */
 class EquipmentData {
 	public static $tablename = "equipment";
+	public $id;
+	public $code;
+	public $name;
+	public $description;
+	public $price_hour;
+	public $price_half;
+	public $created_at;
+
+	// Propiedades de estado en tiempo de ejecución
+	public $is_occupied = false;
+	public $current_rent = null;
 
 	public function __construct(){
+		$this->code = "";
 		$this->name = "";
-		$this->lastname = "";
-		$this->username = "";
-		$this->email = "";
-		$this->password = "";
-		$this->created_at = "NOW()";
+		$this->description = "";
+		$this->price_hour = 0.0;
+		$this->price_half = 0.0;
+		$this->created_at = date("Y-m-d H:i:s");
 	}
 
+	private static function db(): \PDO {
+		return Database::getPdo();
+	}
+
+	/**
+	 * Registra un nuevo equipo.
+	 */
 	public function add(){
-		$sql = "insert into equipment (name,code, price_hour, price_half, created_at) ";
-		$sql .= "value (\"$this->name\",\"$this->code\",\"$this->price_hour\",\"$this->price_half\",$this->created_at)";
-		Executor::doit($sql);
+		$stmt = self::db()->prepare(
+			"INSERT INTO " . self::$tablename . " (code, name, description, price_hour, price_half, created_at) " .
+			"VALUES (:code, :name, :description, :price_hour, :price_half, NOW())"
+		);
+		$stmt->execute([
+			'code' => $this->code,
+			'name' => $this->name,
+			'description' => $this->description,
+			'price_hour' => $this->price_hour,
+			'price_half' => $this->price_half,
+		]);
+		$this->id = self::db()->lastInsertId();
+	}
+
+	/**
+	 * Actualiza los datos de un equipo existente.
+	 */
+	public function update(){
+		$stmt = self::db()->prepare(
+			"UPDATE " . self::$tablename . " SET code = :code, name = :name, description = :description, " .
+			"price_hour = :price_hour, price_half = :price_half WHERE id = :id"
+		);
+		$stmt->execute([
+			'code' => $this->code,
+			'name' => $this->name,
+			'description' => $this->description,
+			'price_hour' => $this->price_hour,
+			'price_half' => $this->price_half,
+			'id' => $this->id,
+		]);
+	}
+
+	/**
+	 * Elimina un equipo por su ID.
+	 */
+	public static function delById($id){
+		$stmt = self::db()->prepare("DELETE FROM " . self::$tablename . " WHERE id = :id");
+		$stmt->execute(['id' => $id]);
 	}
 
 	public function del(){
-		$sql = "delete from ".self::$tablename." where id=$this->id";
-		Executor::doit($sql);
+		self::delById($this->id);
 	}
 
-	public static function delBy($k,$v){
-		$sql = "delete from ".self::$tablename." where $k=\"$v\"";
-		Executor::doit($sql);
-	}
-
-	public function update(){
-		$sql = "update ".self::$tablename." set name=\"$this->name\",code=\"$this->code\",price_hour=\"$this->price_hour\",price_half=\"$this->price_half\" where id=$this->id";
-		Executor::doit($sql);
-	}
-
-	public function update_passwd(){
-		$sql = "update ".self::$tablename." set password=\"$this->password\" where id=$this->id";
-		Executor::doit($sql);
-	}
-
-	public function updateById($k,$v){
-		$sql = "update ".self::$tablename." set $k=\"$v\" where id=$this->id";
-		Executor::doit($sql);
-	}
-
+	/**
+	 * Obtiene un equipo por su ID.
+	 */
 	public static function getById($id){
-		 $sql = "select * from ".self::$tablename." where id=$id";
-		$query = Executor::doit($sql);
-		return Model::one($query[0],new EquipmentData());
+		$stmt = self::db()->prepare("SELECT * FROM " . self::$tablename . " WHERE id = :id");
+		$stmt->execute(['id' => $id]);
+		$stmt->setFetchMode(\PDO::FETCH_CLASS | \PDO::FETCH_PROPS_LATE, self::class);
+		return $stmt->fetch() ?: null;
 	}
 
-	public static function getBy($k,$v){
-		$sql = "select * from ".self::$tablename." where $k=\"$v\"";
-		$query = Executor::doit($sql);
-		return Model::one($query[0],new EquipmentData());
-	}
-
+	/**
+	 * Obtiene todos los equipos registrados.
+	 */
 	public static function getAll(){
-		 $sql = "select * from ".self::$tablename;
-		$query = Executor::doit($sql);
-		return Model::many($query[0],new EquipmentData());
+		$stmt = self::db()->query("SELECT * FROM " . self::$tablename . " ORDER BY id ASC");
+		return $stmt->fetchAll(\PDO::FETCH_CLASS | \PDO::FETCH_PROPS_LATE, self::class);
 	}
 
-	public static function getAllBy($k,$v){
-		 $sql = "select * from ".self::$tablename." where $k=\"$v\"";
-		$query = Executor::doit($sql);
-		return Model::many($query[0],new EquipmentData());
-	}
-
-
+	/**
+	 * Busca equipos por término de búsqueda.
+	 */
 	public static function getLike($q){
-		$sql = "select * from ".self::$tablename." where name like '%$q%'";
-		$query = Executor::doit($sql);
-		return Model::many($query[0],new EquipmentData());
+		$stmt = self::db()->prepare("SELECT * FROM " . self::$tablename . " WHERE name LIKE :q OR code LIKE :q");
+		$stmt->execute(['q' => "%$q%"]);
+		return $stmt->fetchAll(\PDO::FETCH_CLASS | \PDO::FETCH_PROPS_LATE, self::class);
 	}
-
-
 }
-
 ?>
